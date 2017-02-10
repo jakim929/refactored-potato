@@ -13,13 +13,20 @@
 
 \maketitle
 \section{Technical Approach}
-Throughout this process, we used cross validation on 900,000 of the molecules and the error we report is from the remaining 100,000.
+Throughout this process, we used cross validation on 900,000 of the molecules in the given training set and the error we report is from the remaining 100,000.
 
 We started off trying several different models:We tried Lasso regression because we suspected the resulting weight matrix would be sparse (probably not all of the 256 provided features are useful in predicting the HOMO-LUMO gap). We also tried ridge regression and elastic net from sklearn, just in case our continued large error was due to overfitting. However, these yielded results no better than the simple linear regression, so here we decided to try a different approach.
 
 We then moved on to trying bagging and boosting techniques with linear regression, attempting to decrease variance in the models and potentially decrease generalized error. However, this did not result in significantly less error when we tested it against the test set. We tried boosting and bagging with many different models, including linear regression, lasso regression (because we suspected that the the resulting weight matrix would be sparse), and ridge regression, but all of them yielded similar error values to linear regression.
 
-One of the biggest issues we had with the ridge regression was that 
+For the Lasso Linear regression, we used k-fold cross validation $(k = 5)$ on the training set to choose the model's lambda. For the lasso linear regression with the original feature set, the lambda value we obtained through cross validation was around $8.319 * 10^{-5}$, which caused the loss function to be quite similar to the regular linear regression. For the feature set obtained from 256bit Morgan fingerprinting, the lambda value was around $5.552 * 10^{-5}$, still quite small, making the extra term in the loss function somewhat meaningless. This is probably what cause the lasso linear regression to yield very similar RMSE test error values to the regular linear regression.
+
+For the Ridge Linear regression, we used k-fold cross validation again to choose the lambda value. The lambda values we tested for are
+
+\[
+\lambda = \{ 0.00001, 0.0001, 0.001, 0.01, 0.1, 1.0, 10.0, 100.0, 1000.0 \}
+\]
+Using the given 256 features, our ridge regression used a $\lambda = 1.0$ after cross validation, and for the new Morgan fingerprint features (256bit), the model used a $\lambda = 10.0$ after cross validation. However, even so, the RMSE error values stayed quite similar to the regular linear regression.
 
 Because we were not making headway along this vein, we then surmised that perhaps the provided features were not very good at predicting the HOMO-LUMO gap, at least by themselves. We looked into how to extract new features with rdkit. We saw a feature called Morgan fingerprinting which had the possibility of giving us bit vector of whatever size we desired. The default number of bits this yields is 256 per molecule, so we tried this smaller dataset first to determine if this data would yield a better result than the training data that we were given. 
 
@@ -30,7 +37,7 @@ We realized that the new features from Morgan fingerprint algorithm worked signi
 \begin{center}
 \begin{tabular}{|c|c|c|c|}
 \hline
-Regression type & Feature Set & Test Error\\
+Regression type & Feature Set & Validation Error (Test Set)\\
 \hline
 Linear &Given & 0.30091\\
 Random Forest & Given& 0.27460\\
