@@ -13,29 +13,33 @@
 
 \maketitle
 \section{Technical Approach}
-Throughout this process, we measured a rough estimate with RMSE but in the end use $k$-fold to provide our reported errors. 
+Throughout this process, we used cross validation on 900,000 of the molecules and the error we report is from the remaining 100,000.
 
 We started off trying several different models:We tried Lasso regression because we suspected the resulting weight matrix would be sparse (probably not all of the 257 provided features are useful in predicting the HOMO-LUMO gap). We also tried ridge regression and elastic net from sklearn, just in case our continued large error was due to overfitting. However, these yielded results no better than the simple linear regression, so here we decided to try a different approach.
 
 We then moved on to trying bagging and boosting techniques with linear regression, attempting to decrease variance in the models and potentially decrease generalized error. However, this did not result in significantly less error when we tested it against the test set. We tried boosting and bagging with many different models, including linear regression, lasso regression (because we suspected that the the resulting weight matrix would be sparse), and ridge regression, but all of them yielded similar error values to linear regression.
 
-Because we were not making headway along this vein, we then surmised that perhaps the provided features were not very good at predicting the HOMO-LUMO gap, at least by themselves. We looked into how to extract new features with rdkit. We saw a feature called Morgan fingerprinting which had the possibility of giving us bit vector of whatever size we desired. We first tried a bit vector of 512 with plain linear regression (throwing out the original data). This data yielded better results than that we obtained with the original data. So, we then increased the Morgan fingerprint bit vector of 1024 for each molecule with plain linear regression, and this yielded even better results. Following this, we used random forest, and this approach worked yet better.
+Because we were not making headway along this vein, we then surmised that perhaps the provided features were not very good at predicting the HOMO-LUMO gap, at least by themselves. We looked into how to extract new features with rdkit. We saw a feature called Morgan fingerprinting which had the possibility of giving us bit vector of whatever size we desired. The default number of bits this yields is 256 per molecule, so we tried this smaller dataset first to determine if this data would yield a better result than the training data that we were given. 
+
+We realized that the new features from Morgan fingerprint algorithm worked significantly better even with simple linear regression than any other method with the given feature, and then we endeavored to find out which model was best for this data by trying out several different models. When we figured out the best model, we increased the number of bits output by Morgan fingerprint to 512 per molecule with plain linear regression (throwing out the original data). This data yielded better results than that we obtained with the original data. So, we then increased the Morgan fingerprint bit vector of 1024 for each molecule with plain linear regression, and this yielded even better results. Following this, we used random forest, and this approach worked yet better.
 
 \section{Results}
 
 \begin{center}
 \begin{tabular}{|c|c|c|c|}
 \hline
-Regression type & Feature Set & CV Error & Test Error\\
+Regression type & Feature Set & Test Error\\
 \hline
-Linear &Given &&\\
-Random Forest & Given&&\\
-Ridge & Given&&\\
-Lasso &Given&&\\
-Linear&Morgan&&\\
-Ridge&Morgan&&\\
-Lasso&Morgan&&\\
-Random Forest&Morgan&&\\
+Linear &Given &\\
+Random Forest & Given&\\
+Ridge & Given&\\
+Lasso &Given&\\
+Linear&Morgan(256)&\\
+Ridge&Morgan(256)&\\
+Lasso&Morgan(256)&\\
+Random Forest&Morgan (256)&\\
+Random Forest&Morgan (512)&\\
+Random Forest&Morgan (1024)&\\
 \hline
 \end{tabular}
 \end{center}
