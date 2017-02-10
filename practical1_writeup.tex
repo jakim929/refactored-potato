@@ -23,8 +23,25 @@ Because we were not making headway along this vein, we then surmised that perhap
 
 \section{Results}
 
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Regression type & Feature Set & CV Error & Test Error\\
+\hline
+Linear &Given &&\\
+Random Forest & Given&&\\
+Ridge & Given&&\\
+Lasso &Given&&\\
+Linear&Morgan&&\\
+Ridge&Morgan&&\\
+Lasso&Morgan&&\\
+Random Forest&Morgan&&\\
+\hline
+\end{tabular}
+\end{center}
 
 \section{Discussion}
+Random forest probably works so well on this data set because it is quick on large data sets, and it is very plausible that similarities in a few of the bits of the Morgan Fingerprint almost completely account for similarities between HOMO-LUMO gap.
 
 
 \end{document}
