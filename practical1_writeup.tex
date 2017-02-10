@@ -37,7 +37,7 @@ We realized that the new features from Morgan fingerprint algorithm worked signi
 \begin{center}
 \begin{tabular}{|c|c|c|c|}
 \hline
-Regression type & Feature Set & Validation Error (Test Set)\\
+Regression type & Feature Set & Generalization Error (Test Set)\\
 \hline
 Linear &Given & 0.30091\\
 Random Forest & Given& 0.27460\\
@@ -55,6 +55,7 @@ Random Forest&Morgan (1024)& 0.03117\\
 
 \section{Discussion}
 Random forest probably works so well on this data set because it is quick on large data sets, and it is very plausible that similarities in a few of the bits of the Morgan Fingerprint almost completely account for similarities between HOMO-LUMO gap.
+While attempting to create meta-regressions based on the Random forest algorithm it was noticed that the bagging method did not change the RMSE at all, and the bagging method actually increased it. This was likely due to the fact that Random forest is already implicitly bagged so bagging it again did not affect the results. Meanwhile, the boosting algorithm that we created boosted the weights of the data points by the squared error of the sum of the subsequent models. Thus, the $n^{th}$ model would be determined by running the first $n-1$ models, averaging their results, and calculating the square error for each individual point, then using those squared errors to weigh the data for a new Random forest. This produced significantly worse results, likely due to the fact that since Random forest is already an ensemble method boosting likely just added additional inaccurate models that overcompensated for any errors. It was due to these issues that we choose to just use standard Random forest as our model for this practical.
 
 
 \end{document}
