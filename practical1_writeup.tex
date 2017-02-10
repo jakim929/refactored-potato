@@ -13,12 +13,11 @@
 
 \maketitle
 \section{Technical Approach}
+Throughout this process, we used cross validation on 900,000 of the molecules in the given training set and the error we report is from the remaining 100,000.
 
-Throughout this process, we split the training set into 900,000 molecules that we used to train and the remaining 100,000 that we used to report error.
+We started off trying several different models. First, we tried Lasso regression because we suspected the resulting weight matrix would be sparse (probably not all of the 256 provided features are useful in predicting the HOMO-LUMO gap). We also tried ridge regression and elastic net from sklearn, just in case our continued large error was due to overfitting. However, these yielded results no better than the simple linear regression, so here we decided to try a different approach.
 
-We started off trying several different models: we tried Lasso regression because we suspected the resulting weight matrix would be sparse (probably not all of the 256 provided features are useful in predicting the HOMO-LUMO gap). We also tried ridge regression and elastic net from sklearn, just in case our continued large error was due to overfitting. However, these yielded results no better than the simple linear regression, so here we decided to try a different approach.
-
-We then moved on to trying bagging and boosting techniques with linear regression, attempting to decrease variance in the models and potentially decrease generalized error. However, this did not result in significantly less error when we tested it against the test set. We tried boosting and bagging with many different models, including linear regression, lasso regression (because we suspected that the the resulting weight matrix would be sparse), and ridge regression, but all of them yielded similar error values to linear regression.
+We then moved on to trying bagging and boosting techniques with linear regression, attempting to decrease variance in the models and potentially decrease generalized error. However, this did not result in significantly less error when we tested it against the test set, likely due to the high bias of linear regression. We then tried boosting and bagging with many different models, including linear regression, lasso regression (because we suspected that the the resulting weight matrix would be sparse), and ridge regression, but all of them yielded similar error values to linear regression.
 
 For the Lasso Linear regression, we used k-fold cross validation $(k = 5)$ on the training set to choose the model's lambda. For the lasso linear regression with the original feature set, the lambda value we obtained through cross validation was around $8.319 * 10^{-5}$, which caused the loss function to be quite similar to the regular linear regression. For the feature set obtained from 256bit Morgan fingerprinting, the lambda value was around $5.552 * 10^{-5}$, still quite small, making the extra term in the loss function somewhat meaningless. This is probably what cause the lasso linear regression to yield very similar RMSE test error values to the regular linear regression.
 
@@ -29,23 +28,19 @@ For the Ridge Linear regression, we used k-fold cross validation again to choose
 \]
 Using the given 256 features, our ridge regression used a $\lambda = 1.0$ after cross validation, and for the new Morgan fingerprint features (256bit), the model used a $\lambda = 10.0$ after cross validation. However, even so, the RMSE error values stayed quite similar to the regular linear regression.
 
-We decided to extract more features using RDKIT. Using Morgan fingerprinting, we extracted 256, 512, and 1024 features with a radii of 3. The typical radii is supposed to be between 0-3. Having seen that the Random Forest regression was the most effective, and due to the lack of computing power, we only ran the random forests regression on the 1024 bit features. This proved to be significantly more successful.
+Because we were not making headway along this vein, we then surmised that perhaps the provided features were not very good at predicting the HOMO-LUMO gap, at least by themselves. We looked into how to extract new features with rdkit. We saw a feature called Morgan fingerprinting which had the possibility of giving us bit vector of whatever size we desired. The default number of bits this yields is 256 per molecule, so we tried this smaller dataset first to determine if this data would yield a better result than the training data that we were given. 
 
-
+We saw that even linear regression with larger Morgan fingerprints outperformed all our previous models. Having beaten the baseline we began searching for the model that would best leverage the additional data that we had extracted. When we Random forests tended to give us the best results, we increased the number of bits output by Morgan fingerprint to 512 per molecule with plain linear regression (throwing out the original data). This data yielded better results than that we obtained with the original data. So, we then increased the Morgan fingerprint bit vector of 1024 for each molecule with plain linear regression, and this yielded even better results.
 
 \section{Results}
-
-The results we obtained were all from our RMSE of our predictions for the 100,000 molecules that we set aside for testing. All of the methods gave reasonable performance. All the techniques we tried gave us the same or better results as compared to the linear regression baseline. The Ridge and Lasso regression on the given features yielded generalized errors of 0.30091 and 0.30092, respectively, which was very close to the error of the linear regression baseline. 
-
-After we started training on new features (Morgan fingerprint data), all of our results beat the random forest baseline. Plain linear regression trained on 256 bits/molecule from the Morgan fingerprint yielded an error of 0.21651, which was already better than the random forest baseline. As we trained again with random forest regression and added more bits per molecule from Morgan fingerprinting as features, the error got smaller and smaller.
 
 \begin{center}
 \begin{tabular}{|c|c|c|c|}
 \hline
 Regression type & Feature Set & Generalization Error (Test Set)\\
 \hline
-Linear Baseline &Given & 0.30091\\
-Random Forest Baseline & Given& 0.27460\\
+Linear &Given & 0.30091\\
+Random Forest & Given& 0.27460\\
 Ridge & Given& 0.30091\\
 Lasso &Given& 0.30092\\
 Linear&Morgan(256)& 0.21651\\
@@ -53,22 +48,13 @@ Ridge&Morgan(256)& 0.21651\\
 Lasso&Morgan(256)& 0.21653 \\
 Random Forest&Morgan (256)& 0.10412\\
 Random Forest&Morgan (512)& 0.08658\\
-Random Forest&Morgan (1024)& 0.07217\\
+Random Forest&Morgan (1024)& 0.03117\\
 \hline
 \end{tabular}
 \end{center}
 
-
-
 \section{Discussion}
-Random forest probably works so well on this data set because it is quick on large data sets, and it is very plausible that similarities in a few of the bits of the Morgan Fingerprint almost completely account for similarities between HOMO-LUMO gap.
-
-Our linear regressions (Lasso, Regular, and Ridge), as explained above, were not too effective. We suspect that this is due to the sparsity of the data, and the fact that much of the features are unrelated to the HOMO-LUMO gap. Seeing that Lasso and Ridge did not provide much improvements, we decided the problem was less with regularization and that perhaps our features weren't great at representing the HOMO-LUMO gap.
-
-We then surmised that perhaps the provided features were not very good at predicting the HOMO-LUMO gap, at least by themselves. We looked into how to extract new features with rdkit. We saw a feature called Morgan fingerprinting which had the possibility of giving us bit vector of whatever size we desired. The default number of bits this yields is 256 per molecule, so we tried this smaller dataset first to determine if this data would yield a better result than the training data that we were given. 
-
-We realized that the new features from Morgan fingerprint algorithm worked significantly better even with simple linear regression than any other method with the given feature, and then we endeavored to find out which model was best for this data by trying out several different models. When we figured out the best model, we increased the number of bits output by Morgan fingerprint to 512 per molecule with plain linear regression (throwing out the original data). This data yielded better results than that we obtained with the original data. So, we then increased the Morgan fingerprint bit vector of 1024 for each molecule with plain linear regression, and this yielded even better results. Following this, we used random forest, and this approach worked yet better.
-
+Random forest probably works so well on this data set because it is best able to extract heuristics from the bitvectors that we were passing in. Additionally, it is very plausible that similarities in a few of the bits of the Morgan Fingerprint almost completely account for similarities between HOMO-LUMO gap.
 While attempting to create meta-regressions based on the Random forest algorithm it was noticed that the bagging method did not change the RMSE at all, and the bagging method actually increased it. This was likely due to the fact that Random forest is already implicitly bagged so bagging it again did not affect the results. Meanwhile, the boosting algorithm that we created boosted the weights of the data points by the squared error of the sum of the subsequent models. Thus, the $n^{th}$ model would be determined by running the first $n-1$ models, averaging their results, and calculating the square error for each individual point, then using those squared errors to weigh the data for a new Random forest. This produced significantly worse results, likely due to the fact that since Random forest is already an ensemble method boosting likely just added additional inaccurate models that overcompensated for any errors. It was due to these issues that we choose to just use standard Random forest as our model for this practical.
 
 
